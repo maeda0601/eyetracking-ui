@@ -84,6 +84,7 @@ uv run scripts/face_mouse.py
 | **`Ctrl+Alt+P`** | 有効／無効の切り替え |
 | **`Ctrl+Alt+C`** | 今の顔の位置を中心に設定し直す |
 | **`Ctrl+Alt+W`** | 確認ウィンドウの表示／非表示 |
+| **`Ctrl+Alt+S`** | 設定画面を開く |
 | **`Ctrl+Alt+Q`** | 終了 |
 | 本物のマウスを画面の四隅へ動かす | 緊急停止（pyautogui の FAILSAFE） |
 
@@ -92,7 +93,24 @@ uv run scripts/face_mouse.py
 
 ## 設定の調整
 
-`scripts/face_mouse.py` 冒頭の定数を書き換えて調整します。主な項目:
+### 設定画面（おすすめ）
+
+**`settings_face_mouse.bat`** をダブルクリックするか、動作中に **`Ctrl+Alt+S`** を押すと設定画面が開きます。
+
+![設定画面](docs/images/settings.png)
+
+- 項目はタブで分かれています。よく触るものは先頭の「よく使う」タブにまとめてあります
+- スライダーでも、右の欄に直接数値を打ち込んでも変更できます
+- 各項目の下に、何をする値で、大きくするとどうなるかを書いてあります
+- **保存すると、動作中のアプリにそのまま反映されます**（約1秒以内。再起動は不要）。
+  カメラ番号など起動時にしか読まない項目は「※再起動で反映」と表示されます
+- 設定は `scripts/face_mouse_config.json` に保存されます（PCごとの設定なので Git には含めません）
+
+設定画面はアプリを起動していなくても開けます（その場合は次回の起動時に反映されます）。
+
+### 既定値（コード内の定数）
+
+既定値は `scripts/face_mouse.py` 冒頭の定数です。設定画面で保存した値があれば、そちらが優先されます。主な項目:
 
 | 定数 | 既定値 | 説明 |
 |---|---|---|
@@ -125,8 +143,12 @@ EARの値は確認ウィンドウ（`Ctrl+Alt+W`）の左上で見られます�
 
 ```
 start_face_mouse.bat     起動用バッチ（初回は環境構築とモデル取得も行う）
+settings_face_mouse.bat  設定画面を開くバッチ
 scripts/
   face_mouse.py          メインアプリ（カメラ→顔検出→カーソル移動・クリック判定→表示）
+  face_mouse_settings.py 設定画面（tkinter）
+  settings_schema.py     設定項目の定義と設定ファイルの読み書き
+  face_mouse_config.json 設定画面で保存した設定（保存時に作成。Git には含めない）
   download_model.py      検出モデルのダウンロード
   gen_codemap.py         docs/CODEMAP.md の自動生成
 models/

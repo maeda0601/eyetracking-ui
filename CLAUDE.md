@@ -18,7 +18,7 @@ Webカメラで **顔の向き（鼻先の位置）でカーソル移動 ＋ ウ
 6. キー操作（確認ウィンドウ選択時）：`p` で一時停止／再開、`c` で中心の再設定、`q` または `ESC` で終了。グローバルホットキー（Windowsのみ、ウィンドウの有無に関係なく有効）：`Ctrl+Alt+P` で一時停止／再開、`Ctrl+Alt+C` で中心の再設定、`Ctrl+Alt+W` で確認ウィンドウの表示／非表示、`Ctrl+Alt+Q` で終了
 7. 起動直後は無効（一時停止）状態とし、両目を2秒閉じ続けると有効にする。有効中に両目を5秒閉じ続けると無効に戻す（通常のまばたきで誤って有効にならないよう継続時間で判定）
 8. 起動中は画面上部中央に半透明・最前面・クリック透過の状態表示（tkinter）を常に出す。確認ウィンドウは起動時には表示しない（`Ctrl+Alt+W` で表示）。表示時はカメラ映像にランドマーク、EAR値、状態（ACTIVE／PAUSED／NO FACE）、クリック通知、左ウインクの経過時間を表示
-9. 感度・しきい値などのパラメータはファイル冒頭に定数（アッパースネークケース）でまとめる
+9. 感度・しきい値などのパラメータはファイル冒頭に定数（アッパースネークケース）でまとめる。設定画面（`scripts/face_mouse_settings.py`、`Ctrl+Alt+S` または `settings_face_mouse.bat`）で変更でき、値は `scripts/face_mouse_config.json` に保存して起動時と動作中（約1秒ごと）に定数へ反映する
 10. `pyautogui.FAILSAFE` は**有効のまま**にし、その旨をコメントで説明する（画面隅へのマウス移動で緊急停止できるようにするため）
 
 ## 開発ルール
@@ -39,6 +39,8 @@ Webカメラで **顔の向き（鼻先の位置）でカーソル移動 ＋ ウ
 
 - `scripts/face_mouse.py` … メインスクリプト（カメラ取得 → ランドマーク検出 → カーソル移動・クリック判定 → 表示）。`WinkDetector`（ウインク判定）、`CursorController`（平滑化・デッドゾーン）、`ScrollController`（スクロール保持モード）、`GlobalHotkeys`（グローバルホットキー）、`run()`（メインループ）
 - `start_face_mouse.bat` … 起動用バッチ（`.venv` が無ければ `uv sync`、あれば `.venv` の Python で直接起動）。日本語を含むため **Shift-JIS（cp932）・CRLF** で保存する
+- `scripts/settings_schema.py` … 設定項目の定義（タブ・説明・範囲・再起動要否）と設定JSONの読み書き。既定値は `face_mouse.py` の定数を ast で読む（二重管理しない）。**設定画面に出すパラメータを追加・変更したら SCHEMA も更新する**（定数はリテラルで書く）
+- `scripts/face_mouse_settings.py` … 設定画面（tkinter）。`settings_face_mouse.bat` で開く（cp932・CRLF）
 - `scripts/gen_codemap.py` … `docs/CODEMAP.md` を `ast` で自動生成するスクリプト（`uv run scripts/gen_codemap.py`）
 - `models/face_landmarker.task` … MediaPipe Face Landmarker のモデル（`scripts/download_model.py` で取得。Git には含めない。mediapipe 1.x は旧 `mp.solutions` が無く Tasks API 必須）
 - `scripts/download_model.py` … モデルの取得（SHA-256 で検証）

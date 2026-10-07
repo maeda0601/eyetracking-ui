@@ -14,6 +14,9 @@ Webカメラの映像から MediaPipe Face Landmarker で顔のランドマー�
 確認ウィンドウ（カメラ映像）は起動時には表示しない。Ctrl+Alt+W で表示／非表示を切り替える。
 起動中は画面上部中央に、半透明の小さな状態表示（オーバーレイ）を常に出す。
 
+パラメータは下の定数が既定値。設定画面（face_mouse_settings.py）で変更した値は
+scripts/face_mouse_config.json に保存され、起動時と動作中（約1秒ごとに確認）に反映される。
+
 キー操作（確認ウィンドウ表示中、かつアクティブなときのみ有効）:
     p       : 一時停止／再開
     c       : 現在の顔の位置を中心として再設定（キャリブレーション）
@@ -23,10 +26,12 @@ Webカメラの映像から MediaPipe Face Landmarker で顔のランドマー�
     Ctrl+Alt+P : 一時停止／再開
     Ctrl+Alt+C : 現在の顔の位置を中心として再設定
     Ctrl+Alt+W : 確認ウィンドウの表示／非表示
+    Ctrl+Alt+S : 設定画面を開く
     Ctrl+Alt+Q : 終了
 """
 
 import ctypes
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -42,6 +47,8 @@ import mediapipe as mp
 import pyautogui
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python import vision
+
+import settings_schema
 
 # ============================================================
 # パラメータ（環境に合わせてここを調整する）
@@ -93,6 +100,10 @@ ACTIVATE_HOLD_SEC = 2.0         # 無効状態で両目をこの秒数閉じ続�
 DEACTIVATE_HOLD_SEC = 5.0       # 有効状態で両目をこの秒数閉じ続けると無効に戻る
 EYES_CLOSED_MSG_DELAY_SEC = 0.5 # 両目をこの秒数以上閉じたら経過時間を表示する（まばたきで表示がちらつかないため）
 
+# --- 設定ファイル ---
+# 設定画面で保存された値を、動作中にこの間隔で確認して反映する
+CONFIG_POLL_SEC = 1.0
+
 # --- 表示 ---
 WINDOW_NAME = "Face Mouse"      # 確認ウィンドウ名（OpenCVは日本語表示に非対応のため英字）
 # 起動時に確認ウィンドウを表示するか。False でも Ctrl+Alt+W で表示できる
@@ -124,6 +135,7 @@ HOTKEY_ACTIONS = (
     (ord("P"), "pause"),        # Ctrl+Alt+P : 一時停止／再開
     (ord("C"), "center"),       # Ctrl+Alt+C : 中心の再設定
     (ord("W"), "window"),       # Ctrl+Alt+W : 確認ウィンドウの表示／非表示
+    (ord("S"), "settings"),     # Ctrl+Alt+S : 設定画面を開く
 )
 
 # ============================================================
@@ -431,6 +443,7 @@ class StatusOverlay:
         self.screen_w = screen_w
         self.root = None
         self.last_text = None
+        self.alpha = OVERLAY_ALPHA
         if not SHOW_STATUS_OVERLAY:
             return
         if tk is None:
@@ -471,6 +484,10 @@ class StatusOverlay:
         if self.root is None:
             return
         try:
+            if self.alpha != OVERLAY_ALPHA:
+                # 設定画面で濃さが変更されたら反映する
+                self.root.attributes("-alpha", OVERLAY_ALPHA)
+                self.alpha = OVERLAY_ALPHA
             if text != self.last_text:
                 self.label.configure(text=text, fg=OVERLAY_COLORS[state])
                 self.root.update_idletasks()
@@ -492,6 +509,78 @@ class StatusOverlay:
             except tk.TclError as e:
                 print("注意: 状態表示を閉じる際にエラーが発生しました（{}）。".format(e))
             self.root = None
+
+
+class SettingsWatcher:
+    """設定ファイル（scripts/face_mouse_config.json）を読み込み、モジュールの定数に反映する
+
+    起動時に一度読み込み、以降は CONFIG_POLL_SEC ごとに更新日時を確認して、
+    変わっていれば読み直す。起動時にしか使わない項目（restart=True）は動作中には反映しない。
+    """
+
+    def __init__(self):
+        self.path = settings_schema.CONFIG_PATH
+        self.last_mtime = None
+        self.next_check = 0.0
+        self.pending_restart = set()   # 変更されたが再起動まで反映しない項目
+
+    def _get_mtime(self):
+        try:
+            return self.path.stat().st_mtime
+        except OSError:
+            return None   # ファイルが無い（未保存）
+
+    def load_initial(self):
+        """起動時の読み込み（すべての項目を反映する）"""
+        self.last_mtime = self._get_mtime()
+        values = settings_schema.load_config(self.path)
+        self._apply(values, at_startup=True)
+        if values:
+            print("設定ファイルを読み込みました: {}".format(self.path))
+
+    def poll(self, now):
+        """一定間隔で設定ファイルの変更を確認し、変わっていれば反映する。反映したら True"""
+        if now < self.next_check:
+            return False
+        self.next_check = now + CONFIG_POLL_SEC
+        mtime = self._get_mtime()
+        if mtime is None or mtime == self.last_mtime:
+            return False
+        self.last_mtime = mtime
+        changed = self._apply(settings_schema.load_config(self.path), at_startup=False)
+        if changed:
+            print("設定を反映しました: {}".format(", ".join(changed)))
+        if self.pending_restart:
+            print("次の項目は顔マウスの再起動後に反映されます: {}".format(", ".join(sorted(self.pending_restart))))
+        return bool(changed)
+
+    def _apply(self, values, at_startup):
+        """読み込んだ値を定数（モジュールのグローバル変数）に反映し、変わった項目名を返す"""
+        module_globals = globals()
+        changed = []
+        for key, value in values.items():
+            if module_globals.get(key) == value:
+                continue
+            if not at_startup and settings_schema.SCHEMA_BY_KEY[key].get("restart"):
+                self.pending_restart.add(key)
+                continue
+            module_globals[key] = value
+            changed.append(key)
+        return changed
+
+
+def open_settings_window():
+    """設定画面を別プロセスで開く（コンソールを出さないよう pythonw を優先する）"""
+    settings_script = Path(__file__).resolve().parent / "face_mouse_settings.py"
+    python_path = Path(sys.executable)
+    pythonw_path = python_path.with_name("pythonw.exe")
+    if pythonw_path.exists():
+        python_path = pythonw_path
+    try:
+        subprocess.Popen([str(python_path), str(settings_script)], cwd=str(settings_script.parent))
+        print("設定画面を開きました。")
+    except OSError as e:
+        print("設定画面を開けませんでした: {}".format(e))
 
 
 def create_landmarker():
@@ -574,6 +663,10 @@ def run():
     screen_w, screen_h = pyautogui.size()
     print("画面サイズ: {} x {}".format(screen_w, screen_h))
 
+    # 設定ファイルの値を反映してから、カメラや表示を準備する
+    settings = SettingsWatcher()
+    settings.load_initial()
+
     landmarker = create_landmarker()
     cap = open_camera()
     cursor = CursorController(screen_w, screen_h)
@@ -603,7 +696,7 @@ def run():
     print("有効中に両目を{:.0f}秒閉じると無効に戻ります。".format(DEACTIVATE_HOLD_SEC))
     if hotkeys.enabled:
         print("操作: Ctrl+Alt+P=一時停止/再開, Ctrl+Alt+C=中心の再設定, "
-              "Ctrl+Alt+W=確認ウィンドウ表示/非表示, Ctrl+Alt+Q=終了")
+              "Ctrl+Alt+W=確認ウィンドウ表示/非表示, Ctrl+Alt+S=設定画面, Ctrl+Alt+Q=終了")
     print("確認ウィンドウ選択時: p=一時停止/再開, c=中心の再設定, q/ESC=終了")
     print("緊急停止: 実際のマウスを画面の四隅へ動かしてください。")
 
@@ -627,12 +720,17 @@ def run():
                     cv2.destroyWindow(WINDOW_NAME)
                     cv2.waitKey(1)  # ウィンドウを閉じる処理をOpenCVに反映させる
                 print("確認ウィンドウを表示しました。" if show_window else "確認ウィンドウを閉じました。")
+            elif hotkey == "settings":
+                open_settings_window()
 
             ok, frame = cap.read()
             if not ok:
                 raise RuntimeError("カメラから映像を取得できませんでした。接続を確認してください。")
 
             now = time.monotonic()
+            # 設定画面で保存された値を反映する
+            if settings.poll(now):
+                click_msg, click_msg_until = "SETTINGS UPDATED", now + 1.5
             # VIDEOモードではタイムスタンプが単調増加である必要がある
             timestamp_ms = max(int((now - start_time) * 1000), last_timestamp_ms + 1)
             last_timestamp_ms = timestamp_ms

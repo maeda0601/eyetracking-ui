@@ -5,7 +5,7 @@ description: scripts/ 配下の各ファイルの役割と主要シンボル（g
 tags: [codemap, generated]
 generated:
   by: script:scripts/gen_codemap.py
-  at: 2026-10-07T02:51:26Z
+  at: 2026-10-07T03:12:24Z
 stale_after: 2027-01-05
 status: stable
 ---
@@ -33,11 +33,23 @@ MediaPipe Face Landmarker のモデルファイルを取得するスクリプト
 - `ScrollController`（start, stop, update, label） … スクロール保持モード：開始時の鼻先の高さを基準に、顔の上下でスクロールする
 - `GlobalHotkeys`（poll） … ウィンドウのフォーカスに関係なくホットキーを検出する（Windowsのみ）
 - `StatusOverlay`（update, close） … 画面上部中央に、常に最前面・半透明・クリック透過の状態表示を出す（tkinter使用）
+- `SettingsWatcher`（load_initial, poll） … 設定ファイル（scripts/face_mouse_config.json）を読み込み、モジュールの定数に反映する
+- `open_settings_window()` … 設定画面を別プロセスで開く（コンソールを出さないよう pythonw を優先する）
 - `create_landmarker()` … Face Landmarker を生成する（モデルファイルがなければ例外）
 - `open_camera()` … カメラを開く（開けなければ例外）
 - `draw_landmarks(frame, landmarks)` … 鼻先・目のランドマークを映像に描画する
 - `draw_status(frame, paused, ear_left, ear_right, face_found, click_msg)` … 状態・EAR値・操作説明を映像に描画する（OpenCVの制約で英字表示）
 - `run()` … メインループ
+- `main()`
+
+## [scripts/face_mouse_settings.py](../scripts/face_mouse_settings.py)
+
+顔マウスの設定画面（tkinter）
+
+- `enable_dpi_awareness()` … 高DPI環境で文字がぼやけないようにする（Windowsのみ。失敗しても動作は続ける）
+- `format_number(item, value)` … 数値を刻みに合った桁数の文字列にする
+- `SettingRow`（refresh） … 1項目分の入力欄（項目名・スライダー／チェック・数値欄・説明）
+- `SettingsApp`（set_value, refresh_all, is_dirty, set_status, reset_current_tab, …） … 設定画面のウィンドウ
 - `main()`
 
 ## [scripts/gen_codemap.py](../scripts/gen_codemap.py)
@@ -50,3 +62,12 @@ docs/CODEMAP.md を自動生成するスクリプト
 - `parse_file(path)` … 1ファイルを解析し、(役割, シンボル一覧) を返す
 - `build_markdown(entries, now)` … CODEMAP.md の本文を組み立てる
 - `main()`
+
+## [scripts/settings_schema.py](../scripts/settings_schema.py)
+
+設定項目の定義と、設定ファイル（JSON）の読み書き
+
+- `load_defaults()` … face_mouse.py 冒頭の定数から、設定項目の既定値を読み取る
+- `normalize_value(key, value)` … 設定値を項目の型・範囲に合わせて変換する。扱えない値なら ValueError
+- `load_config(path)` … 設定ファイルを読み、有効な項目だけを {定数名: 値} で返す（ファイルが無ければ空）
+- `save_config(values, path)` … 設定ファイルに書き出す（一時ファイルに書いてから置き換え、途中で壊れないようにする）

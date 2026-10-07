@@ -492,6 +492,7 @@
             <tr><td><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>P</kbd></td><td>有効／無効の切り替え</td></tr>
             <tr><td><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd></td><td>今の顔の位置を中心に設定し直す</td></tr>
             <tr><td><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>W</kbd></td><td>カメラ映像の確認ウィンドウを表示／非表示</td></tr>
+            <tr><td><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd></td><td>設定画面を開く（感度などの調整。第2部 5章）</td></tr>
             <tr><td><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Q</kbd></td><td>終了</td></tr>
           </tbody>
         </table>
@@ -603,7 +604,21 @@ uv pip install --no-index --find-links wheels -r requirements.txt</code></pre>
       </ul>
 
       <h3 id="a5">5. 感度・しきい値の調整</h3>
-      <p>調整は <code>scripts\face_mouse.py</code> の冒頭にある定数（大文字の名前）を書き換えて行います。書き換えた後は顔マウスを起動し直してください。</p>
+      <h4>設定画面（おすすめ）</h4>
+      <p><strong><code>settings_face_mouse.bat</code> をダブルクリック</strong>するか、顔マウスの動作中に <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> を押すと設定画面が開きます。</p>
+      <p><img src="images/settings.png" alt="設定画面" style="max-width:100%;height:auto;border:1px solid var(--border);border-radius:8px"></p>
+      <ul>
+        <li>項目はタブで分かれています。よく触る項目は先頭の「よく使う」タブにまとめてあります</li>
+        <li>スライダーでも、右の欄に数値を直接入力しても変更できます（直接入力は <kbd>Enter</kbd> で確定）</li>
+        <li>各項目の下に、何をする値か・大きく／小さくするとどうなるか・範囲と既定値を書いてあります</li>
+        <li>既定値から変えた項目は名前が青く表示されます</li>
+        <li><strong>「保存」を押すと、動作中の顔マウスに約1秒で反映されます</strong>（起動し直す必要はありません）。カメラ番号など「※再起動で反映」と書かれた項目だけは、顔マウスを起動し直すと反映されます</li>
+        <li>分からなくなったら「このタブを既定値に戻す」「すべて既定値に戻す」で戻せます（保存するまで反映されません）</li>
+        <li>設定は <code>scripts\face_mouse_config.json</code> に保存されます。PCごとの設定なので、他のPCへはこのファイルをコピーすれば同じ設定にできます</li>
+      </ul>
+      <h4>設定ファイルを使わずに既定値を変える</h4>
+      <p>全員の既定値を変えたい場合は、<code>scripts\face_mouse.py</code> の冒頭にある定数（大文字の名前）を書き換えます。設定画面で保存した値（<code>face_mouse_config.json</code>）があれば、そちらが優先されます。</p>
+      <p>以下、項目名は設定画面の表示名ではなく定数名で書いています（設定画面では各項目の説明欄で確認できます）。</p>
       <h4>まず確認ウィンドウで数値を見る</h4>
       <p><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> で確認ウィンドウを出すと、左上に <code>L-EAR</code>／<code>R-EAR</code>（左目・右目の開き具合）が表示されます。</p>
       <ul>

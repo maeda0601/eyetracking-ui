@@ -16,7 +16,9 @@ Webカメラで顔を撮影し、鼻先の位置でカーソルを動かし、�
 ## 構成
 
 - [start_face_mouse.bat](start_face_mouse.bat) … 起動用バッチファイル（ダブルクリックで起動）
+- [settings_face_mouse.bat](settings_face_mouse.bat) … 設定画面を開くバッチファイル
 - [scripts/face_mouse.py](scripts/face_mouse.py) … メインスクリプト
+- [scripts/face_mouse_settings.py](scripts/face_mouse_settings.py) / [scripts/settings_schema.py](scripts/settings_schema.py) … 設定画面と設定項目の定義
 - [scripts/gen_codemap.py](scripts/gen_codemap.py) … コード構造マップの生成スクリプト
 - [pyproject.toml](pyproject.toml) / `uv.lock` … 依存パッケージ（uv で管理。`uv sync` で環境構築、`uv run scripts/face_mouse.py` で起動）
 - [requirements.txt](requirements.txt) … オフライン環境向けの依存一覧（`uv export` で自動生成）

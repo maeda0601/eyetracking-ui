@@ -9,6 +9,10 @@ models/*.task
 # ダウンロード途中の一時ファイル
 models/*.task.*
 
+# 設定画面で保存した各自の設定（PCごとに異なるため共有しない）
+scripts/face_mouse_config.json
+scripts/face_mouse_config.json.tmp
+
 # オフライン導入用に作る wheel 置き場
 wheels/
 

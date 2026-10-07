@@ -87,7 +87,7 @@ uv run scripts/face_mouse.py
 
 ## 調整のポイント
 
-パラメータは `face_mouse.py` 冒頭の定数で変更します。
+パラメータは設定画面（`settings_face_mouse.bat`、または動作中に `Ctrl+Alt+S`）で変更できます。保存すると動作中のツールに約1秒で反映されます（カメラ番号などは再起動後）。既定値は `face_mouse.py` 冒頭の定数で、設定画面の値は `scripts/face_mouse_config.json` に保存されます。
 
 - カーソルが動きすぎる／足りない → `SENSITIVITY_X` / `SENSITIVITY_Y`
 - カーソルが震える → `SMOOTHING_ALPHA` を小さく、`DEAD_ZONE_PX` を大きく
