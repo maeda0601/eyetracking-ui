@@ -1,0 +1,4 @@
+# バッチファイルは CRLF のまま保持する（LF になると cmd が誤動作するため）
+*.bat text eol=crlf
+# モデルファイルはバイナリとして扱う
+*.task binary

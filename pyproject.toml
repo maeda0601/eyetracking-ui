@@ -1,0 +1,16 @@
+[project]
+name = "eyetracking-ui"
+version = "0.1.0"
+description = "顔の向き（鼻先の位置）でカーソル移動し、ウインクでクリックするハンズフリーのマウス操作ツール"
+readme = "index.md"
+requires-python = ">=3.12,<3.13"
+# OpenCV は mediapipe の依存として opencv-contrib-python が入る。
+# opencv-python と同時に入れると cv2 が競合するため、ここでは個別に指定しない。
+dependencies = [
+    "mediapipe>=1.0.1",
+    "pyautogui>=0.9.54",
+]
+
+[tool.uv]
+# scripts/ を直接実行する構成のため、パッケージとしてはビルドしない
+package = false

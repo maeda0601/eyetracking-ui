@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# MediaPipe の顔検出モデル（約3.6MB）。uv run scripts/download_model.py で取得する
+models/*.task
+# ダウンロード途中の一時ファイル
+models/*.task.*
+
+# オフライン導入用に作る wheel 置き場
+wheels/
+
+# エディタ・OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# Windowsのショートカット（絶対パス・PC名が埋め込まれるため共有しない）
+*.lnk
+
+# Claude Code のローカル設定
+.claude/
